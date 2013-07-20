@@ -1,6 +1,7 @@
 <?php
+require_once(__DIR__.DIRECTORY_SEPARATOR.'function.lib.php');
 require_once('cfg.php');
-
+  
 $arySettings = array();
 $arySettings['title'] = substr( basename('X'.iconv('UTF-8','GB2312',$_REQUEST['title'])), 1 );
 $arySettings['charpter'] = substr( basename('X'.iconv('UTF-8','GB2312',$_REQUEST['charpter'])), 1 );
@@ -16,6 +17,8 @@ foreach($arySettings as $key => $value){
     }
 }
 
+//Host:manhua21.eu.cdndm5.com
+//Referer:http://www.dm5.com/m113138/
 $strPath = PATH.DIRECTORY_SEPARATOR.$arySettings['title'];
 //if(realpath($strPath) != $strPath) die('error: path hacking '.$strPath.'--'.realpath(PATH.DIRECTORY_SEPARATOR));
 if(!file_exists($strPath) || !is_dir($strPath)) mkdir($strPath);
@@ -27,15 +30,19 @@ if(!file_exists($strPath) || !is_dir($strPath)) mkdir($strPath);
 $arySrcSettings = parse_url($arySettings['src']);
 $arySrcSettings['path'] = explode('/', $arySrcSettings['path']);
 $arySrcSettings['path'] = implode('/', array_map('rawurlencode', $arySrcSettings['path']) );
-$arySettings['src'] = sprintf('%s://%s%s?%s&t=%s', $arySrcSettings['scheme'], $arySrcSettings['host'], $arySrcSettings['path'], $arySrcSettings['query'], time());
+//$arySettings['src'] = sprintf('%s://%s%s?%s&t=%s', $arySrcSettings['scheme'], $arySrcSettings['host'], $arySrcSettings['path'], isset($arySrcSettings['query'])?$arySrcSettings['query']:'a=b', time());
+$arySrcSettings['query'] = isset($arySrcSettings['query']) ? parse_str($arySrcSettings['query']) : array();
+$arySrcSettings['query'] = !is_array($arySrcSettings['query']) ? array() : $arySrcSettings['query'];
+$arySrcSettings['query']['t__'] = time();
+$arySrcSettings['query'] = http_build_query($arySrcSettings['query']);
+$arySettings['src'] = http_build_url($arySettings['src'], $arySrcSettings);
 
-
-
-$strPath = $strPath.DIRECTORY_SEPARATOR.$arySettings['no'].substr($arySrcSettings['path'], strrpos($arySrcSettings['path'], '.'));
+$strPath = $strPath.DIRECTORY_SEPARATOR.str_pad($arySettings['no'], 4, '0', STR_PAD_LEFT).substr($arySrcSettings['path'], strrpos($arySrcSettings['path'], '.'));
 
 $aryHeader = array(
     'Accept:*/*',
     'Accept-Encoding:gzip,deflate,sdch',
+    'Accept-Language:zh-CN,zh;q=0.8',
     'Cache-Control:max-age=0,',
     'Connection:keep-alive',
     'Host:'.$arySettings['host']
@@ -62,4 +69,7 @@ var_dump($strPath);
 var_dump($arySettings);
 var_dump($_REQUEST); 
 echo '</pre>';
+
+
+
 exit;
